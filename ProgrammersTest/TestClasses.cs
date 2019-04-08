@@ -10,46 +10,87 @@ namespace ProgrammersTest
 {
     public class StorageClass
     {
-        public void Save<T>(T classToSave) where T : class
+        
+        public string Id { get; set; }
+        public void Save()
         {
-            StreamWriter writer = File.CreateText("storage.json");
-            JsonSerializer serializer = new JsonSerializer();
-            serializer.Serialize(writer, classToSave);
+            this.Id = Guid.NewGuid().ToString();
+            try
+            {
+                using (StreamWriter writer = File.AppendText("storage.json"))
+                {
+                    writer.WriteLine(JsonConvert.SerializeObject(this));
+                }
+            }
+            catch (Exception)
+            {
+
+                throw;
+            }
+        }
+
+        public static Object Find(string id)
+        {
+            using (StreamReader reader = new StreamReader("storage.json"))
+            {
+                string line;
+                //var classType = this.GetType();
+                while ((line = reader.ReadLine()) != null)
+                {
+                    dynamic serializedData = JsonConvert.DeserializeObject(line);
+                    if (serializedData["Id"] == id)
+                    {
+                        //if (this)
+                        Customer result = new Customer(line);
+                        //Customer result;
+                        //result.Id = line["Id"];
+                        //return result;
+                        return result;
+                    }
+                }
+            }
+            return null;
+        }
+        public void Delete()
+        {
+
         }
     }
 
-    public class Customer
+    public class Customer : DataType
     {
         public Customer(string first, string last, Address address)
         {
             FirstName = first;
             LastName = last;
             Address = address;
-            //Id = new Guid().ToString();
-            var testing = JsonConvert.SerializeObject(this);
         }
-        public string Id { get; private set; }
-        public string FirstName { get; private set; }
-        public string LastName { get; private set; }
+
+        public Customer(string line)
+        {
+            dynamic deserialized = JsonConvert.DeserializeObject(line);
+            this.FirstName = deserialized["firstName"];
+            this.LastName = deserialized["lastName"];
+            this.Address = new Address();
+            this.Address.AddressLineOne = deserialized["address"];
+            this.Address.City = deserialized["city"];
+            this.Address.State = deserialized["state"];
+            this.Address.ZipCode = deserialized["zip"];
+        }
+        public string FirstName { get; set; }
+        public string LastName { get; set; }
+        public Address Address { get; set; }
+    }
+
+    public class Company : DataType
+    {
+        public Company(string name, Address address)
+        {
+            Name = name;
+            Address = address;
+        }
+        public string Name { get; private set; }
         public Address Address { get; private set; }
-
-        public void Save()
-        {
-            StreamWriter writer = File.CreateText("storage.json");
-            //JsonSerializer serializer = new JsonSerializer();
-            //serializer.Serialize(writer, this);
-            var testing = JsonConvert.SerializeObject(this);
-            //JsonConvert.SerializeObject(this);
-        }
-        public void Delete()
-        {
-
-        }
-
-        public static Customer Find(string id)
-        {
-            throw new NotImplementedException();
-        }
     }
 
     public class Address
@@ -61,36 +102,19 @@ namespace ProgrammersTest
             State = state;
             ZipCode = zip;
         }
-        public string AddressLineOne { private get; set; }
-        public string City { get; private set; }
-        public string State { get; private set; }
-        public string ZipCode { get; private set; }
+
+        public Address()
+        {
+
+        }
+        public string AddressLineOne { get; set; }
+        public string City { get; set; }
+        public string State { get; set; }
+        public string ZipCode { get; set; }
     }
 
-    public class Company
+    public abstract class DataType : StorageClass
     {
-        public Company(string name, Address address)
-        {
-            Name = name;
-            Address = address;
-            //Id = new Guid().ToString();
-        }
-        public string Id { get; private set; }
-        public string Name { get; private set; }
-        public Address Address { get; private set; }
 
-        public void Save()
-        {
-            
-        }
-
-        public void Delete()
-        {
-
-        }
-
-        public static Company Find(string id) {
-            throw new NotImplementedException();
-        }
     }
 }
